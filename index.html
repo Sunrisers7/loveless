@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Для тебя</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #fff5f8 0%, #ffe4ee 45%, #ffd6e5 100%);
+    font-family: 'Georgia', serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+    padding: 20px;
+    transition: background 1.4s ease;
+  }
+
+  body.step-1 { background: linear-gradient(135deg, #fff5f8 0%, #ffe4ee 45%, #ffd6e5 100%); }
+  body.step-2 { background: linear-gradient(135deg, #fdf3ff 0%, #f3e4ff 50%, #ecd6ff 100%); }
+  body.step-3 { background: linear-gradient(135deg, #fff0f6 0%, #ffdcec 50%, #ffc9e0 100%); }
+  body.step-4 { background: linear-gradient(135deg, #f5f0ff 0%, #ece2ff 50%, #e0d4ff 100%); }
+  body.step-5 { background: linear-gradient(135deg, #fff4f0 0%, #ffe0d6 50%, #ffd0c2 100%); }
+  body.step-6 { background: linear-gradient(135deg, #fef7fb 0%, #fce4f0 50%, #f9d4e6 100%); }
+
+  /* Мягкие световые пятна */
+  .blob {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(90px);
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.5;
+    transition: background 1.4s ease;
+  }
+  .blob-1 { width: 440px; height: 440px; background: #ffc2d9; top: -120px; left: -100px; animation: drift1 14s ease-in-out infinite; }
+  .blob-2 { width: 380px; height: 380px; background: #ffd9e8; bottom: -140px; right: -80px; animation: drift2 17s ease-in-out infinite; }
+  .blob-3 { width: 300px; height: 300px; background: #ffeef4; top: 40%; right: 10%; animation: drift1 20s ease-in-out infinite reverse; }
+
+  @keyframes drift1 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(40px,30px) scale(1.15); } }
+  @keyframes drift2 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-35px,-25px) scale(1.1); } }
+
+  /* Тонкая сетка-орнамент на фоне */
+  .grid-ornament {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(255,158,196,0.08) 0, transparent 2px),
+      radial-gradient(circle at 70% 60%, rgba(200,150,255,0.07) 0, transparent 2px),
+      radial-gradient(circle at 40% 80%, rgba(255,158,196,0.06) 0, transparent 2px);
+    background-size: 120px 120px, 160px 160px, 200px 200px;
+    animation: gridShift 30s linear infinite;
+  }
+  @keyframes gridShift { to { background-position: 120px 120px, -160px 160px, 200px -200px; } }
+
+  /* Лепестки */
+  .petals { position: fixed; inset: 0; pointer-events: none; z-index: 1; }
+  .petal {
+    position: absolute;
+    background: radial-gradient(circle at 30% 30%, #ffffff, #ffb6cf 70%, #ff9ec4);
+    border-radius: 50% 0 50% 50%;
+    opacity: 0;
+    animation: fall linear infinite;
+    box-shadow: 0 0 10px rgba(255,158,196,0.4);
+  }
+  @keyframes fall {
+    0% { transform: translateY(-10vh) rotate(0deg); opacity: 0; }
+    10% { opacity: 0.8; }
+    90% { opacity: 0.8; }
+    100% { transform: translateY(110vh) rotate(540deg); opacity: 0; }
+  }
+
+  /* Мелкие искры */
+  .sparkle {
+    position: fixed;
+    width: 3px;
+    height: 3px;
+    background: #fff;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 1;
+    box-shadow: 0 0 8px 2px rgba(255, 182, 207, 0.8);
+    animation: sparkleTwinkle 3s ease-in-out infinite;
+  }
+  @keyframes sparkleTwinkle {
+    0%, 100% { opacity: 0; transform: scale(0.3); }
+    50% { opacity: 1; transform: scale(1.2); }
+  }
+
+  /* Карточка */
+  .card {
+    position: relative;
+    z-index: 2;
+    max-width: 740px;
+    width: 100%;
+    padding: 75px 60px 60px;
+    background: rgba(255, 255, 255, 0.62);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 182, 207, 0.55);
+    border-radius: 36px;
+    box-shadow: 0 30px 90px rgba(255, 158, 196, 0.28),
+                inset 0 1px 0 rgba(255, 255, 255, 0.95),
+                inset 0 -1px 0 rgba(255, 182, 207, 0.2);
+    text-align: center;
+    opacity: 0;
+    transform: translateY(45px) scale(0.96);
+    animation: cardAppear 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    min-height: 440px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  @keyframes cardAppear { to { opacity: 1; transform: translateY(0) scale(1); } }
+
+  /* Свечение вокруг карточки */
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 38px;
+    background: linear-gradient(120deg, rgba(255,182,207,0.7), rgba(255,255,255,0.9), rgba(255,158,196,0.7));
+    background-size: 300% 300%;
+    animation: borderGlow 8s ease infinite;
+    z-index: -1;
+    filter: blur(14px);
+    opacity: 0.65;
+  }
+  @keyframes borderGlow {
+    0%,100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  /* Детализированный орнамент внутри карточки — уголки */
+  .corner {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    border: 1px solid rgba(255, 158, 196, 0.5);
+    pointer-events: none;
+    opacity: 0;
+    animation: cornerFade 1.6s ease 1s forwards;
+  }
+  .corner::after {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: rgba(255, 158, 196, 0.7);
+    border-radius: 50%;
+    box-shadow: 0 0 10px rgba(255, 158, 196, 0.6);
+  }
+  .corner.tl { top: 20px; left: 20px; border-right: none; border-bottom: none; border-radius: 12px 0 0 0; }
+  .corner.tl::after { top: 4px; left: 4px; }
+  .corner.tr { top: 20px; right: 20px; border-left: none; border-bottom: none; border-radius: 0 12px 0 0; }
+  .corner.tr::after { top: 4px; right: 4px; }
+  .corner.bl { bottom: 20px; left: 20px; border-right: none; border-top: none; border-radius: 0 0 0 12px; }
+  .corner.bl::after { bottom: 4px; left: 4px; }
+  .corner.br { bottom: 20px; right: 20px; border-left: none; border-top: none; border-radius: 0 0 12px 0; }
+  .corner.br::after { bottom: 4px; right: 4px; }
+  @keyframes cornerFade { to { opacity: 1; } }
+
+  /* Тонкая внутренняя рамка */
+  .inner-frame {
+    position: absolute;
+    inset: 14px;
+    border: 1px solid rgba(255, 158, 196, 0.2);
+    border-radius: 26px;
+    pointer-events: none;
+    opacity: 0;
+    animation: cornerFade 2s ease 0.5s forwards;
+  }
+
+  /* Сцена со слайдами */
+  .stage {
+    position: relative;
+    width: 100%;
+    min-height: 280px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .slide-line {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.7s ease, visibility 0.7s;
+    padding: 0 10px;
+  }
+  .slide-line.active { opacity: 1; visibility: visible; pointer-events: auto; }
+
+  .slide-line .text {
+    display: inline-block;
+    line-height: 1.75;
+    letter-spacing: 0.4px;
+    opacity: 0;
+    transform: translateY(30px);
+    filter: blur(8px);
+    transition: opacity 0.9s ease 0.15s,
+                transform 1s cubic-bezier(0.16, 1, 0.3, 1) 0.15s,
+                filter 0.9s ease 0.15s;
+  }
+  .slide-line.active .text { opacity: 1; transform: translateY(0); filter: blur(0); }
+
+  .slide-line .deco {
+    display: block;
+    margin-bottom: 26px;
+    opacity: 0;
+    transform: scale(0.4);
+    transition: opacity 0.8s ease 0.1s, transform 1s cubic-bezier(0.16, 1, 0.3, 1) 0.1s;
+  }
+  .slide-line.active .deco { opacity: 1; transform: scale(1); }
+
+  /* ===== ДЕТАЛИЗИРОВАННЫЕ ОФОРМЛЕНИЯ ===== */
+
+  /* 1. Нежный узор с линией и точками */
+  .s1 .text { font-size: clamp(1.2rem, 2.6vw, 1.5rem); color: #8a5468; font-style: italic; }
+  .s1 .deco {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .s1 .deco::before,
+  .s1 .deco::after {
+    content: '';
+    width: 50px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #ff8fb4);
+  }
+  .s1 .deco::after { background: linear-gradient(90deg, #ff8fb4, transparent); }
+  .s1 .deco span {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #ff8fb4;
+    box-shadow: 0 0 15px #ff8fb4;
+    animation: pulseDot 2s ease-in-out infinite;
+  }
+
+  /* 2. Элегантный с ромбиками */
+  .s2 .text { font-size: clamp(1.15rem, 2.5vw, 1.4rem); color: #6d4a7a; letter-spacing: 3px; line-height: 1.9; }
+  .s2 .deco { display: flex; gap: 14px; align-items: center; }
+  .s2 .deco span {
+    width: 8px; height: 8px;
+    background: #b18fd6;
+    transform: rotate(45deg);
+    animation: diamondPulse 2.4s ease-in-out infinite;
+  }
+  .s2 .deco span:nth-child(2) { animation-delay: 0.4s; width: 12px; height: 12px; background: #8e6bc0; }
+  .s2 .deco span:nth-child(3) { animation-delay: 0.8s; }
+  @keyframes diamondPulse {
+    0%,100% { transform: rotate(45deg) scale(1); opacity: 0.6; }
+    50% { transform: rotate(45deg) scale(1.4); opacity: 1; }
+  }
+
+  /* 3. Тёплый с двойной линией */
+  .s3 .text { font-size: clamp(1.2rem, 2.7vw, 1.55rem); color: #a5486b; letter-spacing: 0.5px; }
+  .s3 .deco {
+    width: 100px; height: 6px;
+    position: relative;
+  }
+  .s3 .deco::before,
+  .s3 .deco::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #ff5c8d, transparent);
+  }
+  .s3 .deco::before { top: 0; }
+  .s3 .deco::after { bottom: 0; }
+  .s3 .deco span {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #ff5c8d;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 20px #ff5c8d;
+    animation: pulseDot 2.2s ease-in-out infinite;
+  }
+
+  /* 4. Загадочный с вращающимися кольцами и точками */
+  .s4 .text { font-size: clamp(1.1rem, 2.4vw, 1.35rem); color: #5d4a8a; letter-spacing: 5px; text-transform: uppercase; }
+  .s4 .deco {
+    width: 60px; height: 60px;
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .s4 .deco::before {
+    content: '';
+    position: absolute; inset: 0;
+    border: 1px solid rgba(140,110,200,0.4);
+    border-radius: 50%;
+    border-top-color: rgba(140,110,200,0.9);
+    animation: rotateRing 4s linear infinite;
+  }
+  .s4 .deco::after {
+    content: '';
+    position: absolute; inset: 12px;
+    border: 1px solid rgba(140,110,200,0.7);
+    border-radius: 50%;
+    border-bottom-color: rgba(140,110,200,1);
+    animation: rotateRing 6s linear infinite reverse;
+  }
+  .s4 .deco span {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #8e6bc0;
+    box-shadow: 0 0 10px #8e6bc0;
+    animation: pulseDot 2s ease-in-out infinite;
+  }
+  @keyframes rotateRing { to { transform: rotate(360deg); } }
+
+  /* 5. Уютный с пульсирующими кольцами и точками по кругу */
+  .s5 .text { font-size: clamp(1.15rem, 2.5vw, 1.4rem); color: #96544e; font-style: italic; line-height: 1.85; }
+  .s5 .deco {
+    width: 80px; height: 80px;
+    position: relative;
+  }
+  .s5 .deco::before,
+  .s5 .deco::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+  }
+  .s5 .deco::before {
+    inset: 0;
+    border: 1px solid rgba(220,150,140,0.5);
+    animation: ringPulse 3s ease-in-out infinite;
+  }
+  .s5 .deco::after {
+    inset: 20px;
+    background: radial-gradient(circle, rgba(255,180,160,0.6), transparent 70%);
+    animation: ringPulse 3s ease-in-out infinite reverse;
+  }
+  .s5 .deco span {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #d8877a;
+    box-shadow: 0 0 12px #d8877a;
+    transform: translate(-50%, -50%);
+    animation: pulseDot 2s ease-in-out infinite;
+  }
+  .s5 .deco span:nth-child(2) {
+    top: 50%; left: 0;
+    width: 4px; height: 4px;
+    background: rgba(220,150,140,0.8);
+    animation-delay: 0.3s;
+  }
+  .s5 .deco span:nth-child(3) {
+    top: 50%; left: 100%;
+    width: 4px; height: 4px;
+    background: rgba(220,150,140,0.8);
+    animation-delay: 0.6s;
+  }
+  @keyframes ringPulse { 0%,100% { transform: scale(1); opacity: 0.6; } 50% { transform: scale(1.15); opacity: 1; } }
+
+  /* 6. Романтичный с сердцем и искрами */
+  .s6 .text { font-size: clamp(1.15rem, 2.5vw, 1.45rem); color: #b04a7a; font-style: italic; line-height: 1.85; }
+  .s6 .deco {
+    position: relative;
+    width: 90px; height: 50px;
+  }
+  .s6 .deco::before,
+  .s6 .deco::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    width: 44px; height: 44px;
+    border: 1.5px solid #ff7fa8;
+    border-radius: 50% 50% 0 50%;
+    transform: rotate(45deg);
+    box-shadow: 0 0 25px rgba(255,127,168,0.4), inset 0 0 15px rgba(255,127,168,0.1);
+    animation: heartPulse 2.4s ease-in-out infinite;
+  }
+  .s6 .deco::before { left: 0; }
+  .s6 .deco::after { left: 28px; }
+  .s6 .deco span {
+    position: absolute;
+    width: 3px; height: 3px;
+    background: #ff7fa8;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #ff7fa8;
+    animation: sparkleFloat 3s ease-in-out infinite;
+  }
+  .s6 .deco span:nth-child(1) { top: -8px; left: 10px; animation-delay: 0s; }
+  .s6 .deco span:nth-child(2) { top: -12px; right: 12px; animation-delay: 0.7s; }
+  .s6 .deco span:nth-child(3) { bottom: -8px; left: 50%; animation-delay: 1.4s; }
+  @keyframes heartPulse { 0%,100% { transform: rotate(45deg) scale(1); } 50% { transform: rotate(45deg) scale(1.12); } }
+  @keyframes sparkleFloat {
+    0%,100% { transform: translateY(0) scale(0.6); opacity: 0.3; }
+    50% { transform: translateY(-6px) scale(1.3); opacity: 1; }
+  }
+
+  /* 7. Финал с двойной линией и свечением */
+  .s7 .text { font-size: clamp(1.3rem, 3vw, 1.7rem); color: #8a3d64; line-height: 1.8; letter-spacing: 1px; }
+  .s7 .deco {
+    width: 140px;
+    position: relative;
+    height: 8px;
+  }
+  .s7 .deco::before,
+  .s7 .deco::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #ff5c8d, transparent);
+    box-shadow: 0 0 15px rgba(255,92,141,0.8);
+  }
+  .s7 .deco::before { top: 0; }
+  .s7 .deco::after { bottom: 0; }
+  .s7 .deco span {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #ff5c8d;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 20px #ff5c8d, 0 0 40px rgba(255,92,141,0.5);
+    animation: pulseDot 2s ease-in-out infinite;
+  }
+
+  @keyframes pulseDot { 0%,100% { transform: scale(1); opacity: 0.6; } 50% { transform: scale(1.5); opacity: 1; } }
+
+  /* Точки прогресса */
+  .dots {
+    position: absolute;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    opacity: 0;
+    animation: hintIn 1.2s ease 2.2s forwards;
+  }
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 158, 196, 0.35);
+    transition: background 0.5s ease, transform 0.5s ease, box-shadow 0.5s ease;
+  }
+  .dot.active {
+    background: #ff5c8d;
+    transform: scale(1.3);
+    box-shadow: 0 0 12px rgba(255,92,141,0.6);
+  }
+
+  /* Подсказка */
+  .hint {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 3;
+    font-size: 0.8rem;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: #d48fa8;
+    opacity: 0;
+    animation: hintIn 1.2s ease 2s forwards;
+    transition: opacity 0.5s ease;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .hint.hidden { opacity: 0 !important; }
+  @keyframes hintIn { to { opacity: 0.85; } }
+  .hint::after {
+    content: '';
+    display: inline-block;
+    width: 6px; height: 6px;
+    margin-left: 10px;
+    border-radius: 50%;
+    background: #ff8fb4;
+    vertical-align: middle;
+    animation: pulseDot 1.6s ease-in-out infinite;
+  }
+
+  @media (max-width: 600px) {
+    .card { padding: 55px 24px 50px; min-height: 420px; }
+    .stage { min-height: 260px; }
+    .s4 .text { letter-spacing: 3px; }
+    .corner { width: 30px; height: 30px; }
+    .corner.tl { top: 14px; left: 14px; }
+    .corner.tr { top: 14px; right: 14px; }
+    .corner.bl { bottom: 14px; left: 14px; }
+    .corner.br { bottom: 14px; right: 14px; }
+    .inner-frame { inset: 8px; }
+    .dots { bottom: 18px; }
+  }
+</style>
+</head>
+<body class="step-1">
+
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+<div class="blob blob-3"></div>
+<div class="grid-ornament"></div>
+<div class="petals" id="petals"></div>
+<div id="sparkles"></div>
+
+<div class="card">
+  <div class="corner tl"></div>
+  <div class="corner tr"></div>
+  <div class="corner bl"></div>
+  <div class="corner br"></div>
+  <div class="inner-frame"></div>
+
+  <div class="stage" id="stage">
+    <div class="slide-line s1 active" data-step="1">
+      <span class="deco"><span></span></span>
+      <span class="text">Есть мысли, которые не решаюсь сказать вслух...</span>
+    </div>
+
+    <div class="slide-line s2" data-step="2">
+      <span class="deco"><span></span><span></span><span></span></span>
+      <span class="text">Но рядом с тобой что-то в тишине становится теплее.</span>
+    </div>
+
+    <div class="slide-line s3" data-step="3">
+      <span class="deco"><span></span></span>
+      <span class="text">Иногда я слишком сильно держусь за то, что дорого.</span>
+    </div>
+
+    <div class="slide-line s4" data-step="4">
+      <span class="deco"><span></span></span>
+      <span class="text">И это не про контроль.</span>
+    </div>
+
+    <div class="slide-line s5" data-step="5">
+      <span class="deco"><span></span><span></span><span></span></span>
+      <span class="text">Просто боюсь потерять то, что стало важным.</span>
+    </div>
+
+    <div class="slide-line s6" data-step="6">
+      <span class="deco"><span></span><span></span><span></span></span>
+      <span class="text">А важным для меня стало одно имя. Твоё.</span>
+    </div>
+
+    <div class="slide-line s7" data-step="7">
+      <span class="deco"><span></span></span>
+      <span class="text">Я могу ошибаться. Но это случайность. Прости ♡</span>
+    </div>
+  </div>
+
+  <div class="dots" id="dots"></div>
+</div>
+
+<div class="hint" id="hint">Нажми, чтобы продолжить</div>
+
+<script>
+  // Лепестки
+  const petals = document.getElementById('petals');
+  for (let i = 0; i < 22; i++) {
+    const p = document.createElement('div');
+    p.className = 'petal';
+    const size = Math.random() * 14 + 6;
+    p.style.width = size + 'px';
+    p.style.height = size + 'px';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.animationDuration = (Math.random() * 10 + 9) + 's';
+    p.style.animationDelay = (Math.random() * 12) + 's';
+    p.style.transform = 'rotate(' + Math.random() * 360 + 'deg)';
+    petals.appendChild(p);
+  }
+
+  // Мелкие искры
+  const sparkles = document.getElementById('sparkles');
+  for (let i = 0; i < 20; i++) {
+    const s = document.createElement('div');
+    s.className = 'sparkle';
+    s.style.left = Math.random() * 100 + '%';
+    s.style.top = Math.random() * 100 + '%';
+    s.style.animationDelay = (Math.random() * 4) + 's';
+    s.style.animationDuration = (Math.random() * 3 + 2) + 's';
+    sparkles.appendChild(s);
+  }
+
+  const slides = Array.from(document.querySelectorAll('.slide-line'));
+  const dotsContainer = document.getElementById('dots');
+  const hint = document.getElementById('hint');
+  let current = 0;
+
+  slides.forEach(() => {
+    const d = document.createElement('div');
+    d.className = 'dot';
+    dotsContainer.appendChild(d);
+  });
+  const dots = Array.from(document.querySelectorAll('.dot'));
+  dots[0].classList.add('active');
+
+  function showSlide(index) {
+    slides.forEach((s, i) => {
+      if (i === index) s.classList.add('active');
+      else s.classList.remove('active');
+    });
+    dots.forEach((d, i) => {
+      if (i === index) d.classList.add('active');
+      else d.classList.remove('active');
+    });
+    document.body.className = 'step-' + (index + 1);
+  }
+
+  function nextSlide() {
+    if (current < slides.length - 1) {
+      current++;
+      showSlide(current);
+    }
+    if (current === slides.length - 1) {
+      hint.classList.add('hidden');
+    }
+  }
+
+  document.body.addEventListener('click', nextSlide);
+  document.body.setAttribute('tabindex', '0');
+  document.body.focus();
+  document.body.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' || e.code === 'Enter' || e.code === 'ArrowRight') {
+      e.preventDefault();
+      nextSlide();
+    }
+  });
+</script>
+
+</body>
+</html>
